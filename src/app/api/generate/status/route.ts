@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import Replicate from "replicate";
 import { prisma } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
@@ -27,10 +26,22 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    const replicate = new Replicate({ auth: process.env.REPLICATE_API_TOKEN! });
+    // Check prediction status via Replicate HTTP API
+    const response = await fetch(`https://api.replicate.com/v1/predictions/${predictionId}`, {
+      headers: {
+        "Authorization": `Bearer ${process.env.REPLICATE_API_TOKEN}`,
+      },
+    });
 
-    // Check prediction status
-    const prediction = await replicate.predictions.get(predictionId);
+    if (!response.ok) {
+      console.error("Failed to check prediction status:", response.status);
+      return NextResponse.json({
+        status: "generating",
+        message: "Checking status...",
+      });
+    }
+
+    const prediction = await response.json();
 
     if (prediction.status === "succeeded") {
       // Get the video URL from output
@@ -40,7 +51,7 @@ export async function GET(request: NextRequest) {
       } else if (Array.isArray(prediction.output)) {
         videoUrl = prediction.output[0];
       } else if (prediction.output && typeof prediction.output === "object" && "url" in prediction.output) {
-        videoUrl = (prediction.output as any).url;
+        videoUrl = prediction.output.url;
       } else {
         videoUrl = String(prediction.output);
       }
@@ -85,16 +96,18 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    // Still processing
+    // Still processing (starting or processing)
     return NextResponse.json({
       status: "generating",
-      message: "Still creating your video...",
+      message: prediction.status === "starting" 
+        ? "Starting up the AI model..." 
+        : "Creating your video...",
     });
   } catch (error: any) {
     console.error("Status check error:", error);
-    return NextResponse.json(
-      { error: "Failed to check video status" },
-      { status: 500 }
-    );
+    return NextResponse.json({
+      status: "generating",
+      message: "Checking status...",
+    });
   }
 }
