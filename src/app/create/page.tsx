@@ -61,6 +61,7 @@ function CreatePage() {
     setError(null);
 
     try {
+      // Step 1: Start the generation (returns immediately)
       const response = await fetch("/api/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -73,12 +74,58 @@ function CreatePage() {
       }
 
       const result = await response.json();
-      setGeneratedVideo(result);
-      setStep("complete");
+
+      // If it's already completed (demo mode), go straight to complete
+      if (result.status === "completed" || result.videoUrl) {
+        setGeneratedVideo(result);
+        setStep("complete");
+        return;
+      }
+
+      // Step 2: Poll for completion
+      const predictionId = result.predictionId;
+      const shareId = result.shareId;
+      const shareUrl = result.shareUrl;
+
+      const pollForCompletion = async () => {
+        const maxAttempts = 60; // 60 attempts × 3 seconds = 3 minutes max
+        for (let i = 0; i < maxAttempts; i++) {
+          await new Promise((resolve) => setTimeout(resolve, 3000)); // Wait 3 seconds
+
+          try {
+            const statusRes = await fetch(
+              `/api/generate/status?predictionId=${predictionId}&shareId=${shareId}`
+            );
+            const statusData = await statusRes.json();
+
+            if (statusData.status === "completed") {
+              setGeneratedVideo({
+                videoUrl: statusData.videoUrl,
+                shareId,
+                shareUrl,
+              });
+              setStep("complete");
+              return;
+            }
+
+            if (statusData.status === "failed") {
+              throw new Error(statusData.error || "Video generation failed");
+            }
+
+            // Still generating, continue polling...
+          } catch (pollError: any) {
+            throw pollError;
+          }
+        }
+
+        throw new Error("Video generation timed out. Please try again.");
+      };
+
+      await pollForCompletion();
     } catch (err: any) {
       setError(err.message);
       setStep("style"); // Go back to style selection
-      toast.error("Generation failed. Please try again.");
+      toast.error(err.message || "Generation failed. Please try again.");
     }
   };
 
