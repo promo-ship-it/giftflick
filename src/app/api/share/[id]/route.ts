@@ -16,29 +16,59 @@ export async function GET(
       );
     }
 
+    // Handle demo mode share IDs
+    if (shareId.startsWith("demo-")) {
+      return NextResponse.json({
+        video: {
+          id: shareId,
+          shareId,
+          occasion: "BIRTHDAY",
+          recipientName: "Friend",
+          message: "This is a demo video message!",
+          style: "CINEMATIC",
+          videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4",
+          thumbnailUrl: null,
+          status: "COMPLETED",
+          views: 1,
+          shares: 0,
+          createdAt: new Date().toISOString(),
+          senderName: "GiftFlick Demo",
+        },
+      });
+    }
+
     // Find the video by shareId
-    const video = await prisma.video.findUnique({
-      where: { shareId },
-      select: {
-        id: true,
-        shareId: true,
-        occasion: true,
-        recipientName: true,
-        message: true,
-        style: true,
-        videoUrl: true,
-        thumbnailUrl: true,
-        status: true,
-        views: true,
-        shares: true,
-        createdAt: true,
-        user: {
-          select: {
-            name: true,
+    let video;
+    try {
+      video = await prisma.video.findUnique({
+        where: { shareId },
+        select: {
+          id: true,
+          shareId: true,
+          occasion: true,
+          recipientName: true,
+          message: true,
+          style: true,
+          videoUrl: true,
+          thumbnailUrl: true,
+          status: true,
+          views: true,
+          shares: true,
+          createdAt: true,
+          user: {
+            select: {
+              name: true,
+            },
           },
         },
-      },
-    });
+      });
+    } catch (dbError: any) {
+      console.warn("Database error on share lookup:", dbError.message);
+      return NextResponse.json(
+        { error: "Video not found" },
+        { status: 404 }
+      );
+    }
 
     if (!video) {
       return NextResponse.json(
@@ -48,23 +78,20 @@ export async function GET(
     }
 
     // Increment view count
-    await prisma.video.update({
-      where: { shareId },
-      data: { views: { increment: 1 } },
-    });
-
-    // Track referral if this is from a share
-    const referer = request.headers.get("referer");
-    if (referer) {
-      // Log the referral source for analytics
-      console.log(`Video ${shareId} viewed from: ${referer}`);
+    try {
+      await prisma.video.update({
+        where: { shareId },
+        data: { views: { increment: 1 } },
+      });
+    } catch (e) {
+      // Non-critical, don't fail the request
     }
 
     return NextResponse.json({
       video: {
         ...video,
         senderName: video.user?.name || "Someone special",
-        views: video.views + 1, // Include the current view
+        views: video.views + 1,
       },
     });
   } catch (error) {
@@ -84,15 +111,23 @@ export async function POST(
   try {
     const shareId = params.id;
     const body = await request.json();
-    const { platform } = body; // 'whatsapp', 'twitter', 'email', 'sms', 'copy'
+    const { platform } = body;
+
+    // Don't track demo shares
+    if (shareId.startsWith("demo-")) {
+      return NextResponse.json({ success: true });
+    }
 
     // Increment share count
-    await prisma.video.update({
-      where: { shareId },
-      data: { shares: { increment: 1 } },
-    });
+    try {
+      await prisma.video.update({
+        where: { shareId },
+        data: { shares: { increment: 1 } },
+      });
+    } catch (e) {
+      // Non-critical
+    }
 
-    // Log for analytics
     console.log(`Video ${shareId} shared via: ${platform}`);
 
     return NextResponse.json({ success: true });
