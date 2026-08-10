@@ -208,11 +208,11 @@ export default function HomePage() {
                 <h3 className="text-xl font-bold">Free</h3>
                 <div className="mt-2">
                   <span className="text-4xl font-bold">$0</span>
-                  <span className="text-white/50">/forever</span>
+                  <span className="text-white/50">/to start</span>
                 </div>
               </div>
               <ul className="space-y-3 flex-1 mb-8">
-                {["1 video per month", "Standard quality", "GiftFlick watermark", "Basic styles"].map((f) => (
+                {["2 free videos to try", "Standard quality", "GiftFlick watermark", "Basic styles", "Share via link"].map((f) => (
                   <li key={f} className="flex items-center gap-2 text-white/70">
                     <Check className="w-4 h-4 text-green-400 shrink-0" />
                     {f}
@@ -225,10 +225,7 @@ export default function HomePage() {
             </div>
 
             {/* Pro Plan */}
-            <div className="card relative border-brand-500/50 flex flex-col">
-              <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-4 py-1 bg-gradient-to-r from-brand-500 to-accent-500 rounded-full text-xs font-bold">
-                MOST POPULAR
-              </div>
+            <div className="card flex flex-col">
               <div className="mb-6">
                 <h3 className="text-xl font-bold">Pro</h3>
                 <div className="mt-2">
@@ -238,6 +235,7 @@ export default function HomePage() {
               </div>
               <ul className="space-y-3 flex-1 mb-8">
                 {[
+                  "Pay only when you create",
                   "HD quality",
                   "No watermark",
                   "All premium styles",
@@ -256,30 +254,33 @@ export default function HomePage() {
             </div>
 
             {/* Unlimited Plan */}
-            <div className="card flex flex-col">
+            <div className="card relative border-brand-500/50 flex flex-col">
+              <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-4 py-1 bg-gradient-to-r from-brand-500 to-accent-500 rounded-full text-xs font-bold">
+                BEST VALUE
+              </div>
               <div className="mb-6">
                 <h3 className="text-xl font-bold">Unlimited</h3>
                 <div className="mt-2">
-                  <span className="text-4xl font-bold">$9.99</span>
+                  <span className="text-4xl font-bold">$14.99</span>
                   <span className="text-white/50">/month</span>
                 </div>
               </div>
               <ul className="space-y-3 flex-1 mb-8">
                 {[
-                  "Unlimited videos",
-                  "All Pro features",
+                  "Up to 50 videos/month",
+                  "All premium styles",
+                  "HD quality, no watermark",
                   "Calendar reminders",
                   "Priority support",
                   "Early access to new styles",
-                  "Bulk send",
                 ].map((f) => (
                   <li key={f} className="flex items-center gap-2 text-white/70">
-                    <Check className="w-4 h-4 text-green-400 shrink-0" />
+                    <Check className="w-4 h-4 text-brand-400 shrink-0" />
                     {f}
                   </li>
                 ))}
               </ul>
-              <Link href="/create?plan=unlimited" className="btn-secondary w-full text-center">
+              <Link href="/create?plan=unlimited" className="btn-primary w-full text-center">
                 Go Unlimited
               </Link>
             </div>
