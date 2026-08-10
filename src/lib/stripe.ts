@@ -18,8 +18,8 @@ export const PLANS = {
       "Download & share anywhere",
     ],
   },
-  PREMIUM: {
-    name: "Premium",
+  PRO_PLUS: {
+    name: "Pro+",
     price: 1499, // $14.99/mo in cents
     priceId: process.env.STRIPE_UNLIMITED_PRICE_ID!,
     features: [

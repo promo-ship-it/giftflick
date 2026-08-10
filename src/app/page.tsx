@@ -253,13 +253,13 @@ export default function HomePage() {
               </Link>
             </div>
 
-            {/* Premium Plan */}
+            {/* Pro+ Plan */}
             <div className="card relative border-brand-500/50 flex flex-col">
               <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-4 py-1 bg-gradient-to-r from-brand-500 to-accent-500 rounded-full text-xs font-bold">
                 BEST VALUE
               </div>
               <div className="mb-6">
-                <h3 className="text-xl font-bold">Premium</h3>
+                <h3 className="text-xl font-bold">Pro+</h3>
                 <div className="mt-2">
                   <span className="text-4xl font-bold">$14.99</span>
                   <span className="text-white/50">/month</span>
@@ -280,8 +280,8 @@ export default function HomePage() {
                   </li>
                 ))}
               </ul>
-              <Link href="/create?plan=premium" className="btn-primary w-full text-center">
-                Go Premium
+              <Link href="/create?plan=proplus" className="btn-primary w-full text-center">
+                Go Pro+
               </Link>
             </div>
           </div>
