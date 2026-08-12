@@ -224,10 +224,10 @@ export default function HomePage() {
               </Link>
             </div>
 
-            {/* Pro Plan */}
+            {/* Basic Plan */}
             <div className="card flex flex-col">
               <div className="mb-6">
-                <h3 className="text-xl font-bold">Pro</h3>
+                <h3 className="text-xl font-bold">Basic</h3>
                 <div className="mt-2">
                   <span className="text-4xl font-bold">$4.99</span>
                   <span className="text-white/50">/video</span>
@@ -238,7 +238,7 @@ export default function HomePage() {
                   "Pay only when you create",
                   "HD quality",
                   "No watermark",
-                  "All premium styles",
+                  "All styles",
                   "Priority generation",
                   "Download & share anywhere",
                 ].map((f) => (
@@ -248,18 +248,18 @@ export default function HomePage() {
                   </li>
                 ))}
               </ul>
-              <Link href="/create?plan=pro" className="btn-primary w-full text-center">
-                Create Pro Video
+              <Link href="/create?plan=basic" className="btn-secondary w-full text-center">
+                Create a Video
               </Link>
             </div>
 
-            {/* Pro+ Plan */}
+            {/* Pro Plan */}
             <div className="card relative border-brand-500/50 flex flex-col">
               <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-4 py-1 bg-gradient-to-r from-brand-500 to-accent-500 rounded-full text-xs font-bold">
                 BEST VALUE
               </div>
               <div className="mb-6">
-                <h3 className="text-xl font-bold">Pro+</h3>
+                <h3 className="text-xl font-bold">Pro</h3>
                 <div className="mt-2">
                   <span className="text-4xl font-bold">$14.99</span>
                   <span className="text-white/50">/month</span>
@@ -270,9 +270,9 @@ export default function HomePage() {
                   "Up to 50 videos/month",
                   "All premium styles",
                   "HD quality, no watermark",
+                  "AI message helper",
                   "Calendar reminders",
                   "Priority support",
-                  "Early access to new styles",
                 ].map((f) => (
                   <li key={f} className="flex items-center gap-2 text-white/70">
                     <Check className="w-4 h-4 text-brand-400 shrink-0" />
@@ -280,10 +280,17 @@ export default function HomePage() {
                   </li>
                 ))}
               </ul>
-              <Link href="/create?plan=proplus" className="btn-primary w-full text-center">
-                Go Pro+
+              <Link href="/create?plan=pro" className="btn-primary w-full text-center">
+                Go Pro
               </Link>
             </div>
+          </div>
+
+          {/* Enterprise callout */}
+          <div className="mt-8 text-center">
+            <p className="text-white/50 text-sm">
+              Need more? <a href="#" className="text-brand-400 hover:text-brand-300 transition">Enterprise plan</a> — up to 500 videos/month, custom branding, API access. <span className="text-white/30">$499/mo</span>
+            </p>
           </div>
         </div>
       </section>

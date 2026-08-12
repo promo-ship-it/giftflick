@@ -52,9 +52,33 @@ function CreatePage() {
     shareUrl: string;
   } | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [aiSuggestions, setAiSuggestions] = useState<string[]>([]);
+  const [aiLoading, setAiLoading] = useState(false);
 
   const steps: Step[] = ["occasion", "details", "style", "generating", "complete"];
   const currentStepIndex = steps.indexOf(step);
+
+  const handleAiSuggest = async () => {
+    setAiLoading(true);
+    try {
+      const res = await fetch("/api/ai-message", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          occasion: videoData.occasion,
+          recipientName: videoData.recipientName,
+        }),
+      });
+      const data = await res.json();
+      if (data.messages && data.messages.length > 0) {
+        setAiSuggestions(data.messages);
+      }
+    } catch (e) {
+      toast.error("Couldn't generate suggestions. Try writing your own!");
+    } finally {
+      setAiLoading(false);
+    }
+  };
 
   const handleGenerate = async () => {
     setStep("generating");
@@ -257,9 +281,47 @@ function CreatePage() {
                              focus:border-brand-500 focus:ring-1 focus:ring-brand-500 
                              outline-none transition text-white placeholder:text-white/30 resize-none"
                   />
-                  <p className="text-xs text-white/40 mt-1">
-                    {videoData.message.length}/500 characters
-                  </p>
+                  <div className="flex items-center justify-between mt-2">
+                    <p className="text-xs text-white/40">
+                      {videoData.message.length}/500 characters
+                    </p>
+                    <button
+                      type="button"
+                      onClick={handleAiSuggest}
+                      disabled={!videoData.recipientName || aiLoading}
+                      className="text-xs flex items-center gap-1 px-3 py-1.5 rounded-lg 
+                               bg-brand-500/20 text-brand-400 hover:bg-brand-500/30 
+                               transition disabled:opacity-40 disabled:cursor-not-allowed"
+                    >
+                      {aiLoading ? (
+                        <Loader2 className="w-3 h-3 animate-spin" />
+                      ) : (
+                        <Sparkles className="w-3 h-3" />
+                      )}
+                      {aiLoading ? "Writing..." : "AI Help Me Write"}
+                    </button>
+                  </div>
+
+                  {/* AI Suggestions */}
+                  {aiSuggestions.length > 0 && (
+                    <div className="mt-3 space-y-2">
+                      <p className="text-xs text-white/50">Click to use a suggestion:</p>
+                      {aiSuggestions.map((suggestion, i) => (
+                        <button
+                          key={i}
+                          type="button"
+                          onClick={() => {
+                            setVideoData((prev) => ({ ...prev, message: suggestion }));
+                            setAiSuggestions([]);
+                          }}
+                          className="w-full text-left p-3 rounded-lg bg-white/5 border border-white/10 
+                                   hover:border-brand-500/50 hover:bg-brand-500/5 transition text-sm text-white/80"
+                        >
+                          {suggestion}
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
 
                 {/* Navigation */}

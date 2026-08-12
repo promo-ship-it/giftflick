@@ -28,8 +28,9 @@ export const VIDEO_STYLES = [
   { value: "MINIMALIST", label: "Minimalist", description: "Clean and simple", preview: "⬜" },
 ] as const;
 
-export const FREE_VIDEOS_TOTAL = 2; // Lifetime free videos (not per month)
-export const UNLIMITED_MONTHLY_CAP = 50; // Max videos per month on Pro+ plan
+export const FREE_VIDEOS_TOTAL = 2; // Lifetime free videos
+export const PRO_MONTHLY_CAP = 50; // Max videos per month on Pro plan
+export const ENTERPRISE_MONTHLY_CAP = 500; // Max videos per month on Enterprise plan
 
 export const APP_NAME = "GiftFlick";
 export const APP_DESCRIPTION = "AI-powered personalized video messages that make every occasion unforgettable.";

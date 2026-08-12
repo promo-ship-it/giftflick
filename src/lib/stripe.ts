@@ -6,20 +6,21 @@ export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
 });
 
 export const PLANS = {
-  PRO_SINGLE: {
-    name: "Pro Video",
+  BASIC: {
+    name: "Basic",
     price: 499, // $4.99 in cents
     priceId: process.env.STRIPE_PRO_PRICE_ID!,
     features: [
+      "Pay per video",
       "HD quality",
       "No watermark",
-      "All premium styles",
+      "All styles",
       "Priority generation",
       "Download & share anywhere",
     ],
   },
-  PRO_PLUS: {
-    name: "Pro+",
+  PRO: {
+    name: "Pro",
     price: 1499, // $14.99/mo in cents
     priceId: process.env.STRIPE_UNLIMITED_PRICE_ID!,
     features: [
@@ -27,9 +28,9 @@ export const PLANS = {
       "All premium styles",
       "HD quality",
       "No watermark",
+      "AI message helper",
       "Calendar reminders",
       "Priority support",
-      "Early access to new styles",
     ],
   },
   ENTERPRISE: {
@@ -37,10 +38,11 @@ export const PLANS = {
     price: 49900, // $499/mo in cents
     priceId: process.env.STRIPE_ENTERPRISE_PRICE_ID!,
     features: [
-      "Unlimited videos (no cap)",
+      "Up to 500 videos/month",
       "Custom branding",
       "Bulk sending",
       "API access",
+      "AI message helper",
       "Dedicated support",
       "Analytics dashboard",
       "Team management",
