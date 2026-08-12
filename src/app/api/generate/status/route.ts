@@ -1,15 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
 
-// GET /api/generate/status?predictionId=xxx&shareId=xxx
+// GET /api/generate/status?predictionId=xxx
 // Client polls this endpoint every 3 seconds to check if video is ready
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const predictionId = searchParams.get("predictionId");
-    const shareId = searchParams.get("shareId");
 
     if (!predictionId) {
       return NextResponse.json(
@@ -34,7 +32,6 @@ export async function GET(request: NextRequest) {
     });
 
     if (!response.ok) {
-      console.error("Failed to check prediction status:", response.status);
       return NextResponse.json({
         status: "generating",
         message: "Checking status...",
@@ -44,7 +41,6 @@ export async function GET(request: NextRequest) {
     const prediction = await response.json();
 
     if (prediction.status === "succeeded") {
-      // Get the video URL from output
       let videoUrl: string;
       if (typeof prediction.output === "string") {
         videoUrl = prediction.output;
@@ -56,21 +52,6 @@ export async function GET(request: NextRequest) {
         videoUrl = String(prediction.output);
       }
 
-      // Update database if we have a shareId
-      if (shareId && !shareId.startsWith("demo-")) {
-        try {
-          await prisma.video.update({
-            where: { shareId },
-            data: {
-              videoUrl,
-              status: "COMPLETED",
-            },
-          });
-        } catch (e) {
-          // Non-critical
-        }
-      }
-
       return NextResponse.json({
         status: "completed",
         videoUrl,
@@ -78,29 +59,17 @@ export async function GET(request: NextRequest) {
     }
 
     if (prediction.status === "failed" || prediction.status === "canceled") {
-      // Update database
-      if (shareId && !shareId.startsWith("demo-")) {
-        try {
-          await prisma.video.update({
-            where: { shareId },
-            data: { status: "FAILED" },
-          });
-        } catch (e) {
-          // Non-critical
-        }
-      }
-
       return NextResponse.json({
         status: "failed",
         error: prediction.error || "Video generation failed. Please try again.",
       });
     }
 
-    // Still processing (starting or processing)
+    // Still processing
     return NextResponse.json({
       status: "generating",
-      message: prediction.status === "starting" 
-        ? "Starting up the AI model..." 
+      message: prediction.status === "starting"
+        ? "Starting up the AI model..."
         : "Creating your video...",
     });
   } catch (error: any) {
