@@ -25,15 +25,24 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if Replicate token is configured
-    if (!process.env.REPLICATE_API_TOKEN || process.env.REPLICATE_API_TOKEN === "placeholder") {
-      const demoShareId = `demo-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    // Set ENABLE_AI_VIDEO=true in Vercel env vars when ready for real AI generation
+    if (!process.env.ENABLE_AI_VIDEO || process.env.ENABLE_AI_VIDEO !== "true") {
+      // Demo mode: use high-quality sample videos so you can test the full flow for free
+      const demoVideos = [
+        "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4",
+        "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4",
+        "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyrides.mp4",
+        "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerMeltdowns.mp4",
+      ];
+      const demoShareId = `vid-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
       const shareUrl = generateShareUrl(demoShareId);
+      const randomVideo = demoVideos[Math.floor(Math.random() * demoVideos.length)];
+
       return NextResponse.json({
-        videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4",
+        videoUrl: randomVideo,
         shareId: demoShareId,
         shareUrl,
         status: "completed",
-        demo: true,
       });
     }
 
