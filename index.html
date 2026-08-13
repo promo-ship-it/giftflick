@@ -507,7 +507,10 @@
                 </div>
             </div>
 
-            <button class="btn" onclick="calculate()">&#9889; Calculate My Macros</button>
+            <div style="display:flex; gap:1rem; margin-top:1rem;">
+                <button class="btn" onclick="calculate()" style="margin-top:0;">&#9889; Calculate My Macros</button>
+                <button class="btn" onclick="clearAll()" style="margin-top:0; background:linear-gradient(135deg, #64748b, #475569); flex:0 0 auto; width:auto; padding:0.9rem 1.5rem;">&#10060; Clear</button>
+            </div>
         </div>
 
         <!-- Results Section -->
@@ -585,6 +588,64 @@
     </div>
 
     <script>
+        // Load saved values on page load
+        const STORAGE_KEY = 'macroCalcValues';
+
+        function saveValues() {
+            const data = {
+                age: document.getElementById('age').value,
+                gender: document.getElementById('gender').value,
+                heightFeet: document.getElementById('heightFeet').value,
+                heightInches: document.getElementById('heightInches').value,
+                currentWeight: document.getElementById('currentWeight').value,
+                targetWeight: document.getElementById('targetWeight').value,
+                activity: document.getElementById('activity').value,
+                goal: document.getElementById('goal').value,
+                timeline: document.getElementById('timeline').value,
+                fastingDays: document.getElementById('fastingDays').value,
+                fastingPattern: document.getElementById('fastingPattern').value
+            };
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+        }
+
+        function loadValues() {
+            const saved = localStorage.getItem(STORAGE_KEY);
+            if (!saved) return;
+            try {
+                const data = JSON.parse(saved);
+                if (data.age) document.getElementById('age').value = data.age;
+                if (data.gender) document.getElementById('gender').value = data.gender;
+                if (data.heightFeet) document.getElementById('heightFeet').value = data.heightFeet;
+                if (data.heightInches) document.getElementById('heightInches').value = data.heightInches;
+                if (data.currentWeight) document.getElementById('currentWeight').value = data.currentWeight;
+                if (data.targetWeight) document.getElementById('targetWeight').value = data.targetWeight;
+                if (data.activity) document.getElementById('activity').value = data.activity;
+                if (data.goal) document.getElementById('goal').value = data.goal;
+                if (data.timeline) document.getElementById('timeline').value = data.timeline;
+                if (data.fastingDays) document.getElementById('fastingDays').value = data.fastingDays;
+                if (data.fastingPattern) document.getElementById('fastingPattern').value = data.fastingPattern;
+            } catch (e) {}
+        }
+
+        function clearAll() {
+            document.getElementById('age').value = '';
+            document.getElementById('gender').value = 'male';
+            document.getElementById('heightFeet').value = '';
+            document.getElementById('heightInches').value = '';
+            document.getElementById('currentWeight').value = '';
+            document.getElementById('targetWeight').value = '';
+            document.getElementById('activity').value = '1.55';
+            document.getElementById('goal').value = 'lose';
+            document.getElementById('timeline').value = '12';
+            document.getElementById('fastingDays').value = '2';
+            document.getElementById('fastingPattern').value = 'spread';
+            document.getElementById('results').classList.remove('visible');
+            localStorage.removeItem(STORAGE_KEY);
+        }
+
+        // Load saved values when page opens
+        window.addEventListener('DOMContentLoaded', loadValues);
+
         // Auto-tab from feet to inches
         const feetInput = document.getElementById('heightFeet');
         const inchesInput = document.getElementById('heightInches');
@@ -630,6 +691,9 @@
                 alert('Please fill in all required fields.');
                 return;
             }
+
+            // Save values to localStorage
+            saveValues();
 
             // Convert imperial to metric for calculations
             const totalInches = (heightFeet * 12) + heightInches;
