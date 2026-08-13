@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { generateShareUrl } from "@/lib/utils";
-import { buildPrompt } from "@/lib/ai";
+import { buildPrompt } from "@/lib/prompts";
 
 export const dynamic = "force-dynamic";
 
