@@ -122,6 +122,35 @@
             color: var(--text-muted);
         }
 
+        .height-inputs {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+        }
+
+        .height-inputs input {
+            width: 70px;
+            padding: 0.75rem 0.75rem;
+            border: 1px solid var(--border);
+            border-radius: 0.5rem;
+            background: var(--card-alt);
+            color: var(--text);
+            font-size: 1rem;
+            text-align: center;
+            transition: border-color 0.2s;
+        }
+
+        .height-inputs input:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        .height-inputs .unit-label {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
         .fasting-section {
             margin-top: 1rem;
             padding-top: 1rem;
@@ -410,16 +439,21 @@
                     </select>
                 </div>
                 <div class="form-group">
-                    <label for="height">Height (cm)</label>
-                    <input type="number" id="height" placeholder="175" min="100" max="250">
+                    <label>Height</label>
+                    <div class="height-inputs">
+                        <input type="number" id="heightFeet" placeholder="5" min="3" max="8" maxlength="1">
+                        <span class="unit-label">ft</span>
+                        <input type="number" id="heightInches" placeholder="10" min="0" max="11" maxlength="2">
+                        <span class="unit-label">in</span>
+                    </div>
                 </div>
                 <div class="form-group">
-                    <label for="currentWeight">Current Weight (kg)</label>
-                    <input type="number" id="currentWeight" placeholder="85" min="30" max="300" step="0.1">
+                    <label for="currentWeight">Current Weight (lbs)</label>
+                    <input type="number" id="currentWeight" placeholder="185" min="60" max="700" step="0.1">
                 </div>
                 <div class="form-group">
-                    <label for="targetWeight">Target Weight (kg)</label>
-                    <input type="number" id="targetWeight" placeholder="75" min="30" max="300" step="0.1">
+                    <label for="targetWeight">Target Weight (lbs)</label>
+                    <input type="number" id="targetWeight" placeholder="165" min="60" max="700" step="0.1">
                 </div>
                 <div class="form-group">
                     <label for="activity">Activity Level</label>
@@ -551,13 +585,40 @@
     </div>
 
     <script>
+        // Auto-tab from feet to inches
+        const feetInput = document.getElementById('heightFeet');
+        const inchesInput = document.getElementById('heightInches');
+
+        feetInput.addEventListener('input', function() {
+            const val = this.value;
+            // If user typed 1 digit (valid foot value 3-8), auto-jump to inches
+            if (val.length >= 1 && parseInt(val) >= 3 && parseInt(val) <= 8) {
+                inchesInput.focus();
+                inchesInput.select();
+            }
+        });
+
+        // Also handle keydown for immediate response
+        feetInput.addEventListener('keydown', function(e) {
+            // If field already has a value and user types another number, jump
+            if (this.value.length >= 1 && e.key >= '0' && e.key <= '9') {
+                setTimeout(() => {
+                    if (this.value.length >= 1) {
+                        inchesInput.focus();
+                        inchesInput.select();
+                    }
+                }, 50);
+            }
+        });
+
         function calculate() {
             // Gather inputs
             const age = parseInt(document.getElementById('age').value);
             const gender = document.getElementById('gender').value;
-            const height = parseFloat(document.getElementById('height').value);
-            const currentWeight = parseFloat(document.getElementById('currentWeight').value);
-            const targetWeight = parseFloat(document.getElementById('targetWeight').value);
+            const heightFeet = parseInt(document.getElementById('heightFeet').value) || 0;
+            const heightInches = parseInt(document.getElementById('heightInches').value) || 0;
+            const currentWeightLbs = parseFloat(document.getElementById('currentWeight').value);
+            const targetWeightLbs = parseFloat(document.getElementById('targetWeight').value);
             const activityMultiplier = parseFloat(document.getElementById('activity').value);
             const goal = document.getElementById('goal').value;
             const timeline = parseInt(document.getElementById('timeline').value);
@@ -565,17 +626,23 @@
             const fastingPattern = document.getElementById('fastingPattern').value;
 
             // Validation
-            if (!age || !height || !currentWeight || !targetWeight) {
+            if (!age || !heightFeet || !currentWeightLbs || !targetWeightLbs) {
                 alert('Please fill in all required fields.');
                 return;
             }
 
-            // Step 1: Calculate BMR using Mifflin-St Jeor
+            // Convert imperial to metric for calculations
+            const totalInches = (heightFeet * 12) + heightInches;
+            const heightCm = totalInches * 2.54;
+            const currentWeightKg = currentWeightLbs * 0.453592;
+            const targetWeightKg = targetWeightLbs * 0.453592;
+
+            // Step 1: Calculate BMR using Mifflin-St Jeor (uses kg and cm)
             let bmr;
             if (gender === 'male') {
-                bmr = (10 * currentWeight) + (6.25 * height) - (5 * age) + 5;
+                bmr = (10 * currentWeightKg) + (6.25 * heightCm) - (5 * age) + 5;
             } else {
-                bmr = (10 * currentWeight) + (6.25 * height) - (5 * age) - 161;
+                bmr = (10 * currentWeightKg) + (6.25 * heightCm) - (5 * age) - 161;
             }
 
             // Step 2: Calculate TDEE (Total Daily Energy Expenditure)
@@ -583,23 +650,24 @@
 
             // Step 3: Calculate calorie target based on goal
             let dailyCalories;
-            const weightDiff = targetWeight - currentWeight;
+            const weightDiffKg = targetWeightKg - currentWeightKg;
+            const weightDiffLbs = targetWeightLbs - currentWeightLbs;
 
             if (goal === 'lose') {
                 // Calculate deficit needed: 1 kg of fat ~ 7700 calories
-                const totalDeficit = Math.abs(weightDiff) * 7700;
+                const totalDeficit = Math.abs(weightDiffKg) * 7700;
                 const weeklyDeficit = totalDeficit / timeline;
                 const dailyDeficit = weeklyDeficit / 7;
                 dailyCalories = tdee - dailyDeficit;
 
-                // Safety floor: never go below BMR * 0.7
-                const safetyFloor = bmr * 0.7;
+                // Safety floor: never go below BMR * 0.75
+                const safetyFloor = bmr * 0.75;
                 if (dailyCalories < safetyFloor) {
                     dailyCalories = safetyFloor;
                 }
             } else if (goal === 'gain') {
                 // Surplus for muscle gain
-                const totalSurplus = Math.abs(weightDiff) * 7700;
+                const totalSurplus = Math.abs(weightDiffKg) * 7700;
                 const weeklySurplus = totalSurplus / timeline;
                 const dailySurplus = weeklySurplus / 7;
                 dailyCalories = tdee + dailySurplus;
@@ -613,27 +681,50 @@
                 dailyCalories = tdee;
             }
 
-            // Step 4: Calculate macros (standard daily without fasting)
-            let proteinPerKg, fatPercent, carbsRemaining;
+            // Step 4: Calculate macros
+            // Protein: based on lean body mass estimation (use target weight as reference)
+            let proteinGramsPerLb;
+            let fatPercent;
 
             if (goal === 'lose') {
-                proteinPerKg = 2.2; // Higher protein to preserve muscle
-                fatPercent = 0.30;
+                proteinGramsPerLb = 1.0; // 1g per lb of body weight (standard recommendation)
+                fatPercent = 0.25;       // 25% of calories from fat
             } else if (goal === 'gain') {
-                proteinPerKg = 2.0;
+                proteinGramsPerLb = 0.9;
                 fatPercent = 0.25;
             } else {
-                proteinPerKg = 1.8;
+                proteinGramsPerLb = 0.8;
                 fatPercent = 0.28;
             }
 
-            const dailyProteinG = currentWeight * proteinPerKg;
-            const dailyFatG = (dailyCalories * fatPercent) / 9;
+            const dailyProteinG = currentWeightLbs * proteinGramsPerLb;
             const proteinCalories = dailyProteinG * 4;
-            const fatCalories = dailyFatG * 9;
-            const carbCalories = dailyCalories - proteinCalories - fatCalories;
-            const dailyCarbsG = carbCalories / 4;
+            const fatCalories = dailyCalories * fatPercent;
+            const dailyFatG = fatCalories / 9;
 
+            // Carbs fill the remaining calories
+            const carbCalories = dailyCalories - proteinCalories - fatCalories;
+            let dailyCarbsG = carbCalories / 4;
+
+            // Safety: if carbs go negative, rebalance by reducing protein slightly
+            if (dailyCarbsG < 0) {
+                // Set minimum carbs at 50g and recalculate protein
+                dailyCarbsG = 50;
+                const remainingAfterCarbsAndFat = dailyCalories - (dailyCarbsG * 4) - fatCalories;
+                const adjustedProteinG = remainingAfterCarbsAndFat / 4;
+                // Only use adjusted if it's reasonable (at least 0.5g/lb)
+                if (adjustedProteinG >= currentWeightLbs * 0.5) {
+                    // Recalculate with adjusted values
+                    const finalProteinG = adjustedProteinG;
+                    buildResults(dailyCalories, finalProteinG, dailyCarbsG, dailyFatG, fastingDays, fastingPattern, tdee, bmr, goal, weightDiffLbs, timeline, currentWeightLbs);
+                    return;
+                }
+            }
+
+            buildResults(dailyCalories, dailyProteinG, dailyCarbsG, dailyFatG, fastingDays, fastingPattern, tdee, bmr, goal, weightDiffLbs, timeline, currentWeightLbs);
+        }
+
+        function buildResults(dailyCalories, dailyProteinG, dailyCarbsG, dailyFatG, fastingDays, fastingPattern, tdee, bmr, goal, weightDiffLbs, timeline, currentWeightLbs) {
             // Step 5: Weekly totals
             const weeklyCalories = dailyCalories * 7;
             const weeklyProtein = dailyProteinG * 7;
@@ -707,7 +798,6 @@
             // Weekly visual breakdown
             const weekDays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
             let fastDayIndices = getFastingDayIndices(fastingDays, fastingPattern);
-            const maxCalForBar = adjustedDailyCalories;
 
             let weeklyHTML = '';
             weekDays.forEach((day, i) => {
@@ -730,9 +820,9 @@
             document.getElementById('weeklyBreakdown').innerHTML = weeklyHTML;
 
             // Plan summary
-            const weightChange = Math.abs(weightDiff).toFixed(1);
+            const weightChange = Math.abs(weightDiffLbs).toFixed(1);
             const direction = goal === 'lose' ? 'lose' : goal === 'gain' ? 'gain' : 'maintain';
-            const weeklyChange = (Math.abs(weightDiff) / timeline).toFixed(2);
+            const weeklyChange = (Math.abs(weightDiffLbs) / timeline).toFixed(2);
 
             let summaryHTML = `
                 <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(180px,1fr)); gap:1rem; margin-bottom:1rem;">
@@ -746,11 +836,11 @@
                     </div>
                     <div>
                         <span style="color:var(--text-muted); font-size:0.8rem;">Goal</span><br>
-                        <strong>${direction === 'maintain' ? 'Maintain weight' : direction.charAt(0).toUpperCase() + direction.slice(1) + ' ' + weightChange + ' kg'}</strong>
+                        <strong>${direction === 'maintain' ? 'Maintain weight' : direction.charAt(0).toUpperCase() + direction.slice(1) + ' ' + weightChange + ' lbs'}</strong>
                     </div>
                     <div>
                         <span style="color:var(--text-muted); font-size:0.8rem;">Timeline</span><br>
-                        <strong>${timeline} weeks (~${weeklyChange} kg/week)</strong>
+                        <strong>${timeline} weeks (~${weeklyChange} lbs/week)</strong>
                     </div>
                     <div>
                         <span style="color:var(--text-muted); font-size:0.8rem;">Macro Split</span><br>
