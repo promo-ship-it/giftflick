@@ -1,0 +1,810 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Macronutrient & Fasting Calculator</title>
+    <style>
+        :root {
+            --primary: #4f46e5;
+            --primary-dark: #3730a3;
+            --accent: #10b981;
+            --bg: #0f172a;
+            --card: #1e293b;
+            --card-alt: #334155;
+            --text: #f1f5f9;
+            --text-muted: #94a3b8;
+            --border: #475569;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            padding: 2rem 1rem;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 2.5rem;
+        }
+
+        header h1 {
+            font-size: 2rem;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 0.5rem;
+        }
+
+        header p {
+            color: var(--text-muted);
+            font-size: 1rem;
+        }
+
+        .card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 1rem;
+            padding: 2rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .card h2 {
+            font-size: 1.25rem;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .card h2 .icon {
+            font-size: 1.4rem;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.25rem;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.4rem;
+        }
+
+        .form-group label {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        .form-group input,
+        .form-group select {
+            padding: 0.75rem 1rem;
+            border: 1px solid var(--border);
+            border-radius: 0.5rem;
+            background: var(--card-alt);
+            color: var(--text);
+            font-size: 1rem;
+            transition: border-color 0.2s;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        .form-group select {
+            cursor: pointer;
+        }
+
+        .form-group .unit {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        .fasting-section {
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border);
+        }
+
+        .fasting-info {
+            background: rgba(245, 158, 11, 0.1);
+            border: 1px solid rgba(245, 158, 11, 0.3);
+            border-radius: 0.5rem;
+            padding: 0.75rem 1rem;
+            margin-top: 0.75rem;
+            font-size: 0.85rem;
+            color: var(--warning);
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            padding: 0.9rem 2rem;
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: white;
+            border: none;
+            border-radius: 0.5rem;
+            font-size: 1.05rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.15s, box-shadow 0.15s;
+            width: 100%;
+            margin-top: 1rem;
+        }
+
+        .btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 20px rgba(79, 70, 229, 0.4);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        /* Results */
+        .results {
+            display: none;
+        }
+
+        .results.visible {
+            display: block;
+            animation: fadeIn 0.4s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .results-header {
+            text-align: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .results-header h2 {
+            justify-content: center;
+        }
+
+        .summary-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .summary-item {
+            background: var(--card-alt);
+            border-radius: 0.75rem;
+            padding: 1.25rem;
+            text-align: center;
+        }
+
+        .summary-item .value {
+            font-size: 1.75rem;
+            font-weight: 700;
+            margin-bottom: 0.25rem;
+        }
+
+        .summary-item .label {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .calories .value { color: #f59e0b; }
+        .protein .value { color: #ef4444; }
+        .carbs .value { color: #3b82f6; }
+        .fats .value { color: #10b981; }
+
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+
+        .comparison-table th,
+        .comparison-table td {
+            padding: 0.75rem 1rem;
+            text-align: center;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .comparison-table th {
+            color: var(--text-muted);
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            font-weight: 600;
+        }
+
+        .comparison-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .comparison-table .row-label {
+            text-align: left;
+            font-weight: 500;
+        }
+
+        .highlight-row {
+            background: rgba(79, 70, 229, 0.1);
+        }
+
+        .highlight-row td {
+            font-weight: 600;
+        }
+
+        .weekly-breakdown {
+            margin-top: 1.5rem;
+        }
+
+        .weekly-breakdown h3 {
+            font-size: 1rem;
+            margin-bottom: 1rem;
+            color: var(--text-muted);
+        }
+
+        .day-bar {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .day-bar .day-name {
+            width: 40px;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        .day-bar .bar-container {
+            flex: 1;
+            height: 24px;
+            background: var(--card-alt);
+            border-radius: 4px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .day-bar .bar-fill {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 0.6s ease;
+        }
+
+        .day-bar .bar-fill.eating {
+            background: linear-gradient(90deg, var(--primary), var(--accent));
+        }
+
+        .day-bar .bar-fill.fasting {
+            background: var(--border);
+            width: 0% !important;
+        }
+
+        .day-bar .bar-value {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            width: 70px;
+            text-align: right;
+        }
+
+        .note {
+            margin-top: 1.5rem;
+            padding: 1rem;
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            border-radius: 0.5rem;
+            font-size: 0.85rem;
+            color: var(--accent);
+        }
+
+        .macro-split {
+            display: flex;
+            height: 12px;
+            border-radius: 6px;
+            overflow: hidden;
+            margin: 1rem 0;
+        }
+
+        .macro-split .protein-bar {
+            background: #ef4444;
+        }
+
+        .macro-split .carbs-bar {
+            background: #3b82f6;
+        }
+
+        .macro-split .fats-bar {
+            background: #10b981;
+        }
+
+        .macro-legend {
+            display: flex;
+            justify-content: center;
+            gap: 1.5rem;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        .macro-legend span {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+
+        .macro-legend .dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+        }
+
+        @media (max-width: 600px) {
+            body {
+                padding: 1rem 0.75rem;
+            }
+
+            .card {
+                padding: 1.5rem;
+            }
+
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .summary-row {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            header h1 {
+                font-size: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Macro & Fasting Calculator</h1>
+            <p>Calculate your daily macronutrients adjusted for intermittent fasting days</p>
+        </header>
+
+        <!-- Input Form -->
+        <div class="card">
+            <h2><span class="icon">&#9881;</span> Your Details</h2>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label for="age">Age</label>
+                    <input type="number" id="age" placeholder="30" min="15" max="100">
+                </div>
+                <div class="form-group">
+                    <label for="gender">Gender</label>
+                    <select id="gender">
+                        <option value="male">Male</option>
+                        <option value="female">Female</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="height">Height (cm)</label>
+                    <input type="number" id="height" placeholder="175" min="100" max="250">
+                </div>
+                <div class="form-group">
+                    <label for="currentWeight">Current Weight (kg)</label>
+                    <input type="number" id="currentWeight" placeholder="85" min="30" max="300" step="0.1">
+                </div>
+                <div class="form-group">
+                    <label for="targetWeight">Target Weight (kg)</label>
+                    <input type="number" id="targetWeight" placeholder="75" min="30" max="300" step="0.1">
+                </div>
+                <div class="form-group">
+                    <label for="activity">Activity Level</label>
+                    <select id="activity">
+                        <option value="1.2">Sedentary (little/no exercise)</option>
+                        <option value="1.375">Light (1-3 days/week)</option>
+                        <option value="1.55" selected>Moderate (3-5 days/week)</option>
+                        <option value="1.725">Active (6-7 days/week)</option>
+                        <option value="1.9">Very Active (intense daily)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="goal">Goal</label>
+                    <select id="goal">
+                        <option value="lose">Lose Weight</option>
+                        <option value="maintain">Maintain Weight</option>
+                        <option value="gain">Gain Muscle</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="timeline">Timeline (weeks)</label>
+                    <input type="number" id="timeline" placeholder="12" min="4" max="104" value="12">
+                </div>
+            </div>
+
+            <!-- Fasting Section -->
+            <div class="fasting-section">
+                <h2><span class="icon">&#9201;</span> Fasting Schedule</h2>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="fastingDays">Fasting Days Per Week (0 cal days)</label>
+                        <select id="fastingDays">
+                            <option value="0">0 - No fasting</option>
+                            <option value="1">1 day</option>
+                            <option value="2" selected>2 days</option>
+                            <option value="3">3 days</option>
+                            <option value="4">4 days</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="fastingPattern">Fasting Pattern</label>
+                        <select id="fastingPattern">
+                            <option value="spread">Spread across week</option>
+                            <option value="consecutive">Consecutive days</option>
+                            <option value="weekend">Weekends</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="fasting-info">
+                    &#9888; Your weekly calorie &amp; macro targets stay the same. On fasting days you eat nothing, so eating days are adjusted upward to compensate and still hit your weekly nutritional goals.
+                </div>
+            </div>
+
+            <button class="btn" onclick="calculate()">&#9889; Calculate My Macros</button>
+        </div>
+
+        <!-- Results Section -->
+        <div class="results" id="results">
+            <div class="card">
+                <div class="results-header">
+                    <h2><span class="icon">&#128200;</span> Your Adjusted Daily Targets (Eating Days)</h2>
+                </div>
+
+                <div class="summary-row">
+                    <div class="summary-item calories">
+                        <div class="value" id="resultCalories">-</div>
+                        <div class="label">Calories</div>
+                    </div>
+                    <div class="summary-item protein">
+                        <div class="value" id="resultProtein">-</div>
+                        <div class="label">Protein (g)</div>
+                    </div>
+                    <div class="summary-item carbs">
+                        <div class="value" id="resultCarbs">-</div>
+                        <div class="label">Carbs (g)</div>
+                    </div>
+                    <div class="summary-item fats">
+                        <div class="value" id="resultFats">-</div>
+                        <div class="label">Fats (g)</div>
+                    </div>
+                </div>
+
+                <!-- Macro Split Bar -->
+                <div class="macro-split" id="macroSplit">
+                    <div class="protein-bar" id="proteinBar"></div>
+                    <div class="carbs-bar" id="carbsBar"></div>
+                    <div class="fats-bar" id="fatsBar"></div>
+                </div>
+                <div class="macro-legend">
+                    <span><span class="dot" style="background:#ef4444"></span> Protein</span>
+                    <span><span class="dot" style="background:#3b82f6"></span> Carbs</span>
+                    <span><span class="dot" style="background:#10b981"></span> Fats</span>
+                </div>
+            </div>
+
+            <!-- Comparison Table -->
+            <div class="card">
+                <h2><span class="icon">&#128202;</span> Breakdown Comparison</h2>
+                <table class="comparison-table">
+                    <thead>
+                        <tr>
+                            <th class="row-label">Metric</th>
+                            <th>Without Fasting<br>(Daily)</th>
+                            <th>With Fasting<br>(Eating Days)</th>
+                            <th>Weekly Total</th>
+                        </tr>
+                    </thead>
+                    <tbody id="comparisonBody">
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Weekly Visual -->
+            <div class="card">
+                <h2><span class="icon">&#128197;</span> Weekly Calorie Map</h2>
+                <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:1rem;">
+                    Visual breakdown showing how your calories are distributed across the week.
+                </p>
+                <div class="weekly-breakdown" id="weeklyBreakdown"></div>
+            </div>
+
+            <!-- Additional Info -->
+            <div class="card">
+                <h2><span class="icon">&#128161;</span> Plan Summary</h2>
+                <div id="planSummary"></div>
+                <div class="note" id="noteSection"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function calculate() {
+            // Gather inputs
+            const age = parseInt(document.getElementById('age').value);
+            const gender = document.getElementById('gender').value;
+            const height = parseFloat(document.getElementById('height').value);
+            const currentWeight = parseFloat(document.getElementById('currentWeight').value);
+            const targetWeight = parseFloat(document.getElementById('targetWeight').value);
+            const activityMultiplier = parseFloat(document.getElementById('activity').value);
+            const goal = document.getElementById('goal').value;
+            const timeline = parseInt(document.getElementById('timeline').value);
+            const fastingDays = parseInt(document.getElementById('fastingDays').value);
+            const fastingPattern = document.getElementById('fastingPattern').value;
+
+            // Validation
+            if (!age || !height || !currentWeight || !targetWeight) {
+                alert('Please fill in all required fields.');
+                return;
+            }
+
+            // Step 1: Calculate BMR using Mifflin-St Jeor
+            let bmr;
+            if (gender === 'male') {
+                bmr = (10 * currentWeight) + (6.25 * height) - (5 * age) + 5;
+            } else {
+                bmr = (10 * currentWeight) + (6.25 * height) - (5 * age) - 161;
+            }
+
+            // Step 2: Calculate TDEE (Total Daily Energy Expenditure)
+            const tdee = bmr * activityMultiplier;
+
+            // Step 3: Calculate calorie target based on goal
+            let dailyCalories;
+            const weightDiff = targetWeight - currentWeight;
+
+            if (goal === 'lose') {
+                // Calculate deficit needed: 1 kg of fat ~ 7700 calories
+                const totalDeficit = Math.abs(weightDiff) * 7700;
+                const weeklyDeficit = totalDeficit / timeline;
+                const dailyDeficit = weeklyDeficit / 7;
+                dailyCalories = tdee - dailyDeficit;
+
+                // Safety floor: never go below BMR * 0.7
+                const safetyFloor = bmr * 0.7;
+                if (dailyCalories < safetyFloor) {
+                    dailyCalories = safetyFloor;
+                }
+            } else if (goal === 'gain') {
+                // Surplus for muscle gain
+                const totalSurplus = Math.abs(weightDiff) * 7700;
+                const weeklySurplus = totalSurplus / timeline;
+                const dailySurplus = weeklySurplus / 7;
+                dailyCalories = tdee + dailySurplus;
+
+                // Cap surplus at a reasonable level
+                const maxSurplus = tdee * 1.3;
+                if (dailyCalories > maxSurplus) {
+                    dailyCalories = maxSurplus;
+                }
+            } else {
+                dailyCalories = tdee;
+            }
+
+            // Step 4: Calculate macros (standard daily without fasting)
+            let proteinPerKg, fatPercent, carbsRemaining;
+
+            if (goal === 'lose') {
+                proteinPerKg = 2.2; // Higher protein to preserve muscle
+                fatPercent = 0.30;
+            } else if (goal === 'gain') {
+                proteinPerKg = 2.0;
+                fatPercent = 0.25;
+            } else {
+                proteinPerKg = 1.8;
+                fatPercent = 0.28;
+            }
+
+            const dailyProteinG = currentWeight * proteinPerKg;
+            const dailyFatG = (dailyCalories * fatPercent) / 9;
+            const proteinCalories = dailyProteinG * 4;
+            const fatCalories = dailyFatG * 9;
+            const carbCalories = dailyCalories - proteinCalories - fatCalories;
+            const dailyCarbsG = carbCalories / 4;
+
+            // Step 5: Weekly totals
+            const weeklyCalories = dailyCalories * 7;
+            const weeklyProtein = dailyProteinG * 7;
+            const weeklyCarbs = dailyCarbsG * 7;
+            const weeklyFat = dailyFatG * 7;
+
+            // Step 6: Adjust for fasting days
+            const eatingDays = 7 - fastingDays;
+            const adjustedDailyCalories = weeklyCalories / eatingDays;
+            const adjustedProtein = weeklyProtein / eatingDays;
+            const adjustedCarbs = weeklyCarbs / eatingDays;
+            const adjustedFat = weeklyFat / eatingDays;
+
+            // Step 7: Display results
+            document.getElementById('resultCalories').textContent = Math.round(adjustedDailyCalories);
+            document.getElementById('resultProtein').textContent = Math.round(adjustedProtein) + 'g';
+            document.getElementById('resultCarbs').textContent = Math.round(adjustedCarbs) + 'g';
+            document.getElementById('resultFats').textContent = Math.round(adjustedFat) + 'g';
+
+            // Macro split bar
+            const totalMacroCal = (adjustedProtein * 4) + (adjustedCarbs * 4) + (adjustedFat * 9);
+            const proteinPct = ((adjustedProtein * 4) / totalMacroCal) * 100;
+            const carbsPct = ((adjustedCarbs * 4) / totalMacroCal) * 100;
+            const fatsPct = ((adjustedFat * 9) / totalMacroCal) * 100;
+
+            document.getElementById('proteinBar').style.width = proteinPct + '%';
+            document.getElementById('carbsBar').style.width = carbsPct + '%';
+            document.getElementById('fatsBar').style.width = fatsPct + '%';
+
+            // Comparison table
+            const compBody = document.getElementById('comparisonBody');
+            compBody.innerHTML = `
+                <tr>
+                    <td class="row-label">Calories</td>
+                    <td>${Math.round(dailyCalories)} kcal</td>
+                    <td><strong>${Math.round(adjustedDailyCalories)} kcal</strong></td>
+                    <td>${Math.round(weeklyCalories)} kcal</td>
+                </tr>
+                <tr>
+                    <td class="row-label">Protein</td>
+                    <td>${Math.round(dailyProteinG)}g</td>
+                    <td><strong>${Math.round(adjustedProtein)}g</strong></td>
+                    <td>${Math.round(weeklyProtein)}g</td>
+                </tr>
+                <tr>
+                    <td class="row-label">Carbs</td>
+                    <td>${Math.round(dailyCarbsG)}g</td>
+                    <td><strong>${Math.round(adjustedCarbs)}g</strong></td>
+                    <td>${Math.round(weeklyCarbs)}g</td>
+                </tr>
+                <tr>
+                    <td class="row-label">Fats</td>
+                    <td>${Math.round(dailyFatG)}g</td>
+                    <td><strong>${Math.round(adjustedFat)}g</strong></td>
+                    <td>${Math.round(weeklyFat)}g</td>
+                </tr>
+                <tr class="highlight-row">
+                    <td class="row-label">Eating Days</td>
+                    <td>7 days</td>
+                    <td><strong>${eatingDays} days</strong></td>
+                    <td>-</td>
+                </tr>
+                <tr>
+                    <td class="row-label">Fasting Days</td>
+                    <td>0 days</td>
+                    <td><strong>${fastingDays} days</strong></td>
+                    <td>0 kcal on fast days</td>
+                </tr>
+            `;
+
+            // Weekly visual breakdown
+            const weekDays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+            let fastDayIndices = getFastingDayIndices(fastingDays, fastingPattern);
+            const maxCalForBar = adjustedDailyCalories;
+
+            let weeklyHTML = '';
+            weekDays.forEach((day, i) => {
+                const isFasting = fastDayIndices.includes(i);
+                const cal = isFasting ? 0 : Math.round(adjustedDailyCalories);
+                const barWidth = isFasting ? 0 : 100;
+                const barClass = isFasting ? 'fasting' : 'eating';
+                const label = isFasting ? 'FAST' : `${cal} kcal`;
+
+                weeklyHTML += `
+                    <div class="day-bar">
+                        <span class="day-name">${day}</span>
+                        <div class="bar-container">
+                            <div class="bar-fill ${barClass}" style="width:${barWidth}%"></div>
+                        </div>
+                        <span class="bar-value">${label}</span>
+                    </div>
+                `;
+            });
+            document.getElementById('weeklyBreakdown').innerHTML = weeklyHTML;
+
+            // Plan summary
+            const weightChange = Math.abs(weightDiff).toFixed(1);
+            const direction = goal === 'lose' ? 'lose' : goal === 'gain' ? 'gain' : 'maintain';
+            const weeklyChange = (Math.abs(weightDiff) / timeline).toFixed(2);
+
+            let summaryHTML = `
+                <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(180px,1fr)); gap:1rem; margin-bottom:1rem;">
+                    <div>
+                        <span style="color:var(--text-muted); font-size:0.8rem;">TDEE (Maintenance)</span><br>
+                        <strong>${Math.round(tdee)} kcal/day</strong>
+                    </div>
+                    <div>
+                        <span style="color:var(--text-muted); font-size:0.8rem;">BMR (Basal Rate)</span><br>
+                        <strong>${Math.round(bmr)} kcal/day</strong>
+                    </div>
+                    <div>
+                        <span style="color:var(--text-muted); font-size:0.8rem;">Goal</span><br>
+                        <strong>${direction === 'maintain' ? 'Maintain weight' : direction.charAt(0).toUpperCase() + direction.slice(1) + ' ' + weightChange + ' kg'}</strong>
+                    </div>
+                    <div>
+                        <span style="color:var(--text-muted); font-size:0.8rem;">Timeline</span><br>
+                        <strong>${timeline} weeks (~${weeklyChange} kg/week)</strong>
+                    </div>
+                    <div>
+                        <span style="color:var(--text-muted); font-size:0.8rem;">Macro Split</span><br>
+                        <strong>${Math.round(proteinPct)}% P / ${Math.round(carbsPct)}% C / ${Math.round(fatsPct)}% F</strong>
+                    </div>
+                    <div>
+                        <span style="color:var(--text-muted); font-size:0.8rem;">Fasting Protocol</span><br>
+                        <strong>${fastingDays === 0 ? 'None' : fastingDays + ' days/week (' + fastingPattern + ')'}</strong>
+                    </div>
+                </div>
+            `;
+            document.getElementById('planSummary').innerHTML = summaryHTML;
+
+            // Note section
+            let noteText = '';
+            if (fastingDays > 0) {
+                noteText = `<strong>Fasting Adjustment:</strong> Your weekly targets remain the same (${Math.round(weeklyCalories)} kcal). `;
+                noteText += `By fasting ${fastingDays} day${fastingDays > 1 ? 's' : ''}, you eat ${Math.round(adjustedDailyCalories)} kcal on your ${eatingDays} eating days instead of ${Math.round(dailyCalories)} kcal every day. `;
+                noteText += `This means eating ~${Math.round(adjustedDailyCalories - dailyCalories)} kcal more per eating day to compensate. `;
+                noteText += `Make sure to prioritize protein (${Math.round(adjustedProtein)}g) on eating days to preserve muscle mass.`;
+            } else {
+                noteText = `<strong>No fasting selected.</strong> You'll eat ${Math.round(dailyCalories)} kcal each day. Consider adding 1-2 fasting days to increase flexibility and meal sizes on eating days.`;
+            }
+            document.getElementById('noteSection').innerHTML = noteText;
+
+            // Show results
+            document.getElementById('results').classList.add('visible');
+            document.getElementById('results').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        function getFastingDayIndices(fastingDays, pattern) {
+            if (fastingDays === 0) return [];
+
+            switch (pattern) {
+                case 'consecutive':
+                    // Start from Monday
+                    return Array.from({ length: fastingDays }, (_, i) => i);
+                case 'weekend':
+                    // Saturday and Sunday first, then fill from Friday backwards
+                    const weekend = [5, 6]; // Sat, Sun
+                    if (fastingDays <= 2) return weekend.slice(0, fastingDays);
+                    const extra = Array.from({ length: fastingDays - 2 }, (_, i) => 4 - i);
+                    return [...weekend, ...extra];
+                case 'spread':
+                default:
+                    // Spread evenly across the week
+                    const indices = [];
+                    const spacing = 7 / fastingDays;
+                    for (let i = 0; i < fastingDays; i++) {
+                        indices.push(Math.round(i * spacing));
+                    }
+                    return indices;
+            }
+        }
+    </script>
+</body>
+</html>
