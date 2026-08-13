@@ -27,12 +27,12 @@ export async function POST(request: NextRequest) {
     // Check if Replicate token is configured
     // Set ENABLE_AI_VIDEO=true in Vercel env vars when ready for real AI generation
     if (!process.env.ENABLE_AI_VIDEO || process.env.ENABLE_AI_VIDEO !== "true") {
-      // Demo mode: use high-quality sample videos so you can test the full flow for free
+      // Demo mode: use sample videos so you can test the full flow for free
       const demoVideos = [
-        "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4",
-        "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4",
-        "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyrides.mp4",
-        "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerMeltdowns.mp4",
+        "https://test-videos.co.uk/vids/bigbuckbunny/mp4/h264/720/Big_Buck_Bunny_720_10s_5MB.mp4",
+        "https://test-videos.co.uk/vids/jellyfish/mp4/h264/720/Jellyfish_720_10s_5MB.mp4",
+        "https://test-videos.co.uk/vids/sintel/mp4/h264/720/Sintel_720_10s_5MB.mp4",
+        "https://test-videos.co.uk/vids/bigbuckbunny/mp4/h264/720/Big_Buck_Bunny_720_10s_1MB.mp4",
       ];
       const demoShareId = `vid-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
       const shareUrl = generateShareUrl(demoShareId);
