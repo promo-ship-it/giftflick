@@ -4,8 +4,32 @@ import { motion } from "framer-motion";
 import Link from "next/link";
 import { Sparkles, Play, Gift, Share2, Zap, Heart, Star, ArrowRight, Check } from "lucide-react";
 import { OCCASIONS } from "@/lib/constants";
+import toast from "react-hot-toast";
 
 export default function HomePage() {
+  const handleCheckout = async (plan: "BASIC" | "PRO") => {
+    try {
+      const response = await fetch("/api/stripe/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ plan }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        toast.error(data.error || "Failed to start checkout");
+        return;
+      }
+
+      if (data.url) {
+        window.location.href = data.url;
+      }
+    } catch (error) {
+      toast.error("Something went wrong. Please try again.");
+    }
+  };
+
   return (
     <div className="min-h-screen bg-black text-white overflow-hidden">
       {/* Navigation */}
@@ -219,8 +243,8 @@ export default function HomePage() {
                   </li>
                 ))}
               </ul>
-              <Link href="/create" className="btn-secondary w-full text-center">
-                Get Started Free
+              <Link href="/auth/signup" className="btn-secondary w-full text-center">
+                Sign Up Free
               </Link>
             </div>
 
@@ -248,9 +272,12 @@ export default function HomePage() {
                   </li>
                 ))}
               </ul>
-              <Link href="/create?plan=basic" className="btn-secondary w-full text-center">
-                Create a Video
-              </Link>
+              <button
+                onClick={() => handleCheckout("BASIC")}
+                className="btn-secondary w-full text-center"
+              >
+                Buy a Video — $4.99
+              </button>
             </div>
 
             {/* Pro Plan */}
@@ -280,9 +307,12 @@ export default function HomePage() {
                   </li>
                 ))}
               </ul>
-              <Link href="/create?plan=pro" className="btn-primary w-full text-center">
-                Go Pro
-              </Link>
+              <button
+                onClick={() => handleCheckout("PRO")}
+                className="btn-primary w-full text-center"
+              >
+                Subscribe — $14.99/mo
+              </button>
             </div>
           </div>
 

@@ -6,18 +6,29 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { plan, userId, email } = body;
 
-    if (!plan || !["PRO_SINGLE", "UNLIMITED", "ENTERPRISE"].includes(plan)) {
+    // Map incoming plan names to PLANS keys
+    const planMap: Record<string, keyof typeof PLANS> = {
+      BASIC: "BASIC",
+      PRO: "PRO",
+      ENTERPRISE: "ENTERPRISE",
+      // Legacy support
+      PRO_SINGLE: "BASIC",
+      UNLIMITED: "PRO",
+    };
+
+    const planKey = planMap[plan];
+    if (!planKey) {
       return NextResponse.json(
-        { error: "Invalid plan. Must be PRO_SINGLE, UNLIMITED, or ENTERPRISE." },
+        { error: "Invalid plan. Must be BASIC, PRO, or ENTERPRISE." },
         { status: 400 }
       );
     }
 
-    const selectedPlan = PLANS[plan as keyof typeof PLANS];
+    const selectedPlan = PLANS[planKey];
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
 
     // Determine if this is a one-time purchase or subscription
-    const isSubscription = plan === "UNLIMITED" || plan === "ENTERPRISE";
+    const isSubscription = planKey === "PRO" || planKey === "ENTERPRISE";
 
     const sessionConfig: any = {
       payment_method_types: ["card"],
@@ -28,7 +39,6 @@ export async function POST(request: NextRequest) {
             product_data: {
               name: `GiftFlick ${selectedPlan.name}`,
               description: selectedPlan.features.join(", "),
-              images: [`${baseUrl}/og-image.png`],
             },
             unit_amount: selectedPlan.price,
             ...(isSubscription && { recurring: { interval: "month" } }),
@@ -38,10 +48,10 @@ export async function POST(request: NextRequest) {
       ],
       mode: isSubscription ? "subscription" : "payment",
       success_url: `${baseUrl}/create?payment=success&plan=${plan}`,
-      cancel_url: `${baseUrl}/create?payment=cancelled`,
+      cancel_url: `${baseUrl}/#pricing`,
       metadata: {
         userId: userId || "anonymous",
-        plan,
+        plan: planKey,
       },
     };
 
@@ -52,9 +62,9 @@ export async function POST(request: NextRequest) {
 
     const session = await stripe.checkout.sessions.create(sessionConfig);
 
-    return NextResponse.json({ 
+    return NextResponse.json({
       url: session.url,
-      sessionId: session.id 
+      sessionId: session.id,
     });
   } catch (error: any) {
     console.error("Stripe checkout error:", error);
