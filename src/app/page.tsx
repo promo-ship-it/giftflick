@@ -288,9 +288,13 @@ export default function HomePage() {
 
           {/* Enterprise callout */}
           <div className="mt-8 text-center">
-            <p className="text-white/50 text-sm">
-              Need more? <a href="#" className="text-brand-400 hover:text-brand-300 transition">Enterprise plan</a> — up to 500 videos/month, custom branding, API access. <span className="text-white/30">$499/mo</span>
-            </p>
+            <div className="card inline-block max-w-lg mx-auto">
+              <p className="font-semibold mb-1">Need more? Enterprise — up to 500 videos/month</p>
+              <p className="text-white/50 text-sm mb-4">Custom branding, bulk sending, API access, dedicated support.</p>
+              <a href="mailto:hello@giftflick.app?subject=Enterprise%20Inquiry" className="btn-secondary inline-flex items-center gap-2 text-sm">
+                Contact Us for Pricing
+              </a>
+            </div>
           </div>
         </div>
       </section>

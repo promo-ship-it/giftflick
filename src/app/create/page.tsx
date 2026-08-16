@@ -94,7 +94,24 @@ function CreatePage() {
 
       if (!response.ok) {
         const err = await response.json();
-        throw new Error(err.error || "Failed to generate video");
+        
+        // Handle login required
+        if (err.error === "LOGIN_REQUIRED") {
+          setStep("style");
+          toast.error("Please sign in to create videos.");
+          window.location.href = "/auth/signin?callbackUrl=/create";
+          return;
+        }
+
+        // Handle free limit reached
+        if (err.error === "FREE_LIMIT_REACHED") {
+          setStep("style");
+          toast.error("You've used your 2 free videos! Subscribe to keep creating.");
+          window.location.href = "/#pricing";
+          return;
+        }
+
+        throw new Error(err.error || err.message || "Failed to generate video");
       }
 
       const result = await response.json();
