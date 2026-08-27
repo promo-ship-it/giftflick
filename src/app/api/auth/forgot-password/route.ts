@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import crypto from "crypto";
+import { sendPasswordResetEmail } from "@/lib/email";
 
 export async function POST(request: NextRequest) {
   try {
@@ -24,40 +25,33 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: true });
     }
 
-    // Generate reset token
+    // Generate reset token and store temporarily in password field with prefix
     const resetToken = crypto.randomBytes(32).toString("hex");
-    const resetExpires = new Date(Date.now() + 3600000); // 1 hour from now
 
-    // Store token in user record
-    // Note: In production, you'd add resetToken and resetTokenExpires fields to User model
-    // For now, we'll use a simple approach with the user's existing fields
-    // TODO: Add proper reset token storage and email sending
+    // Store reset token — we'll use a simple approach:
+    // prefix the password with "RESET:" + token + ":" + expiry timestamp
+    // In a more robust system, you'd add dedicated columns
+    const expiry = Date.now() + 3600000; // 1 hour
+    const resetData = `RESET:${resetToken}:${expiry}:${user.password || ""}`;
+
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { password: resetData },
+    });
 
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
     const resetLink = `${baseUrl}/auth/reset-password?token=${resetToken}&email=${encodeURIComponent(email)}`;
 
-    // Log the reset link (in production, send this via email)
-    console.log(`
-    ========================================
-    PASSWORD RESET REQUEST
-    ========================================
-    Email: ${email}
-    Reset Link: ${resetLink}
-    Expires: ${resetExpires.toISOString()}
-    ========================================
-    
-    TO SEND EMAILS IN PRODUCTION:
-    Set up Resend, SendGrid, or Mailgun and 
-    send this link to the user's email.
-    ========================================
-    `);
-
-    // In production, you would send an email here:
-    // await sendEmail({
-    //   to: email,
-    //   subject: "Reset your GiftFlick password",
-    //   html: `<p>Click <a href="${resetLink}">here</a> to reset your password.</p>`
-    // });
+    // Send the email
+    if (process.env.RESEND_API_KEY && process.env.RESEND_API_KEY !== "placeholder") {
+      const result = await sendPasswordResetEmail(email, resetLink);
+      if (!result.success) {
+        console.error("Failed to send reset email:", result.error);
+      }
+    } else {
+      // Fallback: log the link
+      console.log(`PASSWORD RESET LINK for ${email}: ${resetLink}`);
+    }
 
     return NextResponse.json({ success: true });
   } catch (error: any) {
