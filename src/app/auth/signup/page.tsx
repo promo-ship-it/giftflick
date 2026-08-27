@@ -5,7 +5,7 @@ import { signIn } from "next-auth/react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
-import { Play, Mail, Lock, User, Loader2, ArrowRight, Sparkles } from "lucide-react";
+import { Play, Mail, Lock, User, Loader2, ArrowRight, Sparkles, Eye, EyeOff } from "lucide-react";
 import toast from "react-hot-toast";
 
 export default function SignUpPageWrapper() {
@@ -24,6 +24,7 @@ function SignUpPage() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const handleSignUp = async (e: React.FormEvent) => {
@@ -56,7 +57,7 @@ function SignUpPage() {
         router.push("/auth/signin");
       } else {
         toast.success("Welcome to GiftFlick! 🎉");
-        router.push("/dashboard");
+        router.push("/create");
       }
     } catch (error) {
       toast.error("Something went wrong. Please try again.");
@@ -94,7 +95,7 @@ function SignUpPage() {
 
           {/* Google Sign Up */}
           <button
-            onClick={() => signIn("google", { callbackUrl: "/dashboard" })}
+            onClick={() => signIn("google", { callbackUrl: "/create" })}
             className="w-full flex items-center justify-center gap-3 py-3 px-4 rounded-xl 
                      bg-white text-black font-medium hover:bg-white/90 transition mb-6"
           >
@@ -157,16 +158,23 @@ function SignUpPage() {
               <div className="relative">
                 <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-white/30" />
                 <input
-                  type="password"
+                  type={showPassword ? "text" : "password"}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="At least 8 characters"
                   required
                   minLength={8}
-                  className="w-full pl-11 pr-4 py-3 rounded-xl bg-white/5 border border-white/10 
+                  className="w-full pl-11 pr-11 py-3 rounded-xl bg-white/5 border border-white/10 
                            focus:border-brand-500 focus:ring-1 focus:ring-brand-500 
                            outline-none transition text-white placeholder:text-white/30"
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-white/30 hover:text-white/60 transition"
+                >
+                  {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                </button>
               </div>
             </div>
 
