@@ -84,20 +84,28 @@ export async function POST(request: NextRequest) {
       // Continue without DB — allow video creation in demo mode
     }
 
-    // Demo mode — return sample video
+    // Demo mode — return sample video based on user's selections
     if (!process.env.ENABLE_AI_VIDEO || process.env.ENABLE_AI_VIDEO !== "true") {
-      const demoVideos = [
-        "https://test-videos.co.uk/vids/bigbuckbunny/mp4/h264/720/Big_Buck_Bunny_720_10s_5MB.mp4",
-        "https://test-videos.co.uk/vids/jellyfish/mp4/h264/720/Jellyfish_720_10s_5MB.mp4",
-        "https://test-videos.co.uk/vids/sintel/mp4/h264/720/Sintel_720_10s_5MB.mp4",
-        "https://test-videos.co.uk/vids/bigbuckbunny/mp4/h264/720/Big_Buck_Bunny_720_10s_1MB.mp4",
-      ];
+      // Map styles to different demo videos so each selection feels unique
+      const styleVideoMap: Record<string, string> = {
+        CINEMATIC: "https://test-videos.co.uk/vids/sintel/mp4/h264/720/Sintel_720_10s_5MB.mp4",
+        PLAYFUL: "https://test-videos.co.uk/vids/bigbuckbunny/mp4/h264/720/Big_Buck_Bunny_720_10s_5MB.mp4",
+        ELEGANT: "https://test-videos.co.uk/vids/jellyfish/mp4/h264/720/Jellyfish_720_10s_5MB.mp4",
+        RETRO: "https://test-videos.co.uk/vids/bigbuckbunny/mp4/h264/720/Big_Buck_Bunny_720_10s_1MB.mp4",
+        NATURE: "https://test-videos.co.uk/vids/jellyfish/mp4/h264/720/Jellyfish_720_10s_1MB.mp4",
+        ABSTRACT: "https://test-videos.co.uk/vids/sintel/mp4/h264/720/Sintel_720_10s_1MB.mp4",
+        NEON: "https://test-videos.co.uk/vids/jellyfish/mp4/h264/720/Jellyfish_720_10s_5MB.mp4",
+        WATERCOLOR: "https://test-videos.co.uk/vids/sintel/mp4/h264/720/Sintel_720_10s_5MB.mp4",
+        COMIC: "https://test-videos.co.uk/vids/bigbuckbunny/mp4/h264/720/Big_Buck_Bunny_720_10s_5MB.mp4",
+        MINIMALIST: "https://test-videos.co.uk/vids/jellyfish/mp4/h264/720/Jellyfish_720_10s_1MB.mp4",
+      };
+
+      const videoUrl = styleVideoMap[style] || "https://test-videos.co.uk/vids/jellyfish/mp4/h264/720/Jellyfish_720_10s_5MB.mp4";
       const demoShareId = `vid-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
       const shareUrl = generateShareUrl(demoShareId);
-      const randomVideo = demoVideos[Math.floor(Math.random() * demoVideos.length)];
 
       return NextResponse.json({
-        videoUrl: randomVideo,
+        videoUrl,
         shareId: demoShareId,
         shareUrl,
         status: "completed",
