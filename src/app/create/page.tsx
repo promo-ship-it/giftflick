@@ -135,7 +135,7 @@ function CreatePage() {
 
           try {
             const statusRes = await fetch(
-              `/api/generate/status?predictionId=${predictionId}&shareId=${shareId}`
+              `/api/generate/status?predictionId=${predictionId}&shareId=${shareId}&message=${encodeURIComponent(videoData.message)}&style=${videoData.style}`
             );
             const statusData = await statusRes.json();
 
